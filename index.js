@@ -1,5 +1,5 @@
 const express = require("express");
-const cors = require('cors');
+const cors = require('cors'); //not sure why I need this
 
 const Sequelize = require('sequelize');
 const { user } = require('./models');
@@ -7,9 +7,11 @@ const { user } = require('./models');
 const PORT = process.env.PORT || 8080;
 
 const app = express();
-
-app.use(cors());
+app.use(cors()); //not sure why I need this
 app.use(express.json()); //needed to parse req.body
+
+const bcrypt = require('bcrypt');
+
 
 app.get("/api", (req, res) => {
     res.json({ message: "Hello from server!" });
@@ -20,7 +22,9 @@ app.get('/users', async (req, res) => {
     res.json(users);
 });
 
-app.post('/users', async (req, res) => {
+
+//register user
+app.post('/register', async (req, res) => {
     // req.body contains an Object with firstName, lastName, email
     const { username, password, firstName, lastName, address } = req.body;
 
@@ -38,6 +42,15 @@ app.post('/users', async (req, res) => {
     }).catch(function () {
         console.log("Promise Rejected");
     });
+
+    //add bcrypt
+    const salt = await bcrypt.genSalt(10);
+    bcrypt.hash(newUser.password, salt, async function (err, hash) {
+        newUser.password = hash;
+        await newUser.save(); //saves the hashed password in database
+    });
+
+
     res.json({
         message: `User with username ${username} was successfully created`
     });
